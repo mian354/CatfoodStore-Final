@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 
 export default function CartPage() {
   const [cart, setCart] = useState([]);
-  const [selected, setSelected] = useState([]); // ⭐ รายการที่ติ๊กเลือก
+  const [selected, setSelected] = useState([]);
+  const [errorItem, setErrorItem] = useState(null);   // ⭐ แจ้งเตือนสินค้าไหนเกิน stock
 
   /* -------- LOAD CART -------- */
   useEffect(() => {
@@ -44,15 +45,26 @@ export default function CartPage() {
   const deleteSelected = () => {
     const updated = cart.filter((item) => !selected.includes(item.id));
     updateCart(updated);
-    setSelected([]); // clear selection
+    setSelected([]);
   };
 
-  /* -------- QUANTITY + -------- */
+  /* -------- QUANTITY + (LIMIT BY STOCK) -------- */
   const increase = (id) => {
-    const updated = cart.map((item) =>
-      item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-    );
+    const updated = cart.map((item) => {
+      if (item.id === id) {
+        if (item.quantity >= item.stock) {
+          setErrorItem(id); // ⭐ แสดงแจ้งเตือนตัวนี้
+          return item;
+        }
+        return { ...item, quantity: item.quantity + 1 };
+      }
+      return item;
+    });
+
     updateCart(updated);
+
+    // ซ่อนข้อความเตือนใน 2 วิ
+    setTimeout(() => setErrorItem(null), 2000);
   };
 
   /* -------- QUANTITY - -------- */
@@ -87,9 +99,7 @@ export default function CartPage() {
     return (
       <div className="max-w-4xl mx-auto px-6 py-16 text-center">
         <h1 className="text-3xl font-bold mb-4">ตะกร้าว่างเปล่า</h1>
-        <p className="text-gray-600 mb-6">
-          ยังไม่มีสินค้าในตะกร้าเลยค่ะ 🎀
-        </p>
+        <p className="text-gray-600 mb-6">ยังไม่มีสินค้าในตะกร้าเลยค่ะ 🎀</p>
         <Link
           to="/products"
           className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
@@ -127,8 +137,14 @@ export default function CartPage() {
             />
 
             <div className="flex-1">
-              <h2 className="font-semibold text-lg">{item.name}</h2>
-              <p className="text-red-600 font-bold">{item.price} ฿</p>
+              {/* ชื่อ + น้ำหนัก */}
+              <h2 className="font-semibold text-lg">
+                {item.name}{" "}
+                <span className="font-semibold text-gray-800">{item.weight}</span>
+              </h2>
+
+              {/* ราคา */}
+              <p className="text-red-600 font-bold mt-1">{item.price} ฿</p>
 
               {/* QUANTITY BUTTONS */}
               <div className="flex items-center mt-2">
@@ -150,6 +166,13 @@ export default function CartPage() {
                   +
                 </button>
               </div>
+
+              {/* ⭐ แจ้งเตือนเมื่อเกิน stock */}
+              {errorItem === item.id && (
+                <p className="text-red-600 text-sm mt-2 font-medium">
+                  ❗ เพิ่มไม่ได้ค่ะ — สินค้ามีทั้งหมด {item.stock} ชิ้น
+                </p>
+              )}
             </div>
 
           </div>
@@ -162,9 +185,11 @@ export default function CartPage() {
           disabled={selected.length === 0}
           onClick={deleteSelected}
           className={`px-5 py-3 rounded-lg font-medium transition 
-            ${selected.length === 0
-              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-red-600 text-white hover:bg-red-700"}
+            ${
+              selected.length === 0
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-red-600 text-white hover:bg-red-700"
+            }
           `}
         >
           ลบรายการที่เลือก
@@ -188,11 +213,11 @@ export default function CartPage() {
         </div>
 
         <Link
-            to="/checkout"
-            className="w-full text-center bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 text-lg font-semibold block"
-            >
-            ดำเนินการชำระเงิน →
-            </Link>
+          to="/checkout"
+          className="w-full text-center bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 text-lg font-semibold block"
+        >
+          ดำเนินการชำระเงิน →
+        </Link>
       </div>
     </div>
   );

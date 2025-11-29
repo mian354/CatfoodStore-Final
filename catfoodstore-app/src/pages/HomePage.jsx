@@ -8,38 +8,64 @@ export default function HomePage() {
   const [breedGroups, setBreedGroups] = useState({});
 
   /* ⭐ โหลดสินค้าจาก API */
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get("/api/products");
-        const items = res.data;
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get("/api/products");
+      const items = res.data;
 
-        // ⭐ mark badge ว่าสินค้าใหม่
-        const enhanced = items.map((p, index) => ({
-          ...p,
-          badge: index < 5 ? "new" : null,
-        }));
+      // ⭐ เรียงสินค้าใหม่สุด → เก่าสุด
+      const sorted = [...items].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
 
-        setProducts(enhanced);
+      // ⭐ 7 สินค้าใหม่ล่าสุด (ฐานเริ่มต้น)
+      const baseNewArrivals = sorted.slice(0, 7);
 
-        /* ⭐ GROUP BY BREED */
-        const breedsMap = {};
-        enhanced.forEach((p) => {
-          (p.breed_type || []).forEach((breed) => {
-            if (breed === "all") return; // ตัด ‘all’
-            if (!breedsMap[breed]) breedsMap[breed] = [];
-            breedsMap[breed].push(p);
-          });
+      // ⭐ created_at ตัวล่าสุดใน base
+      const lastBaseCreatedAt =
+        baseNewArrivals.length > 0
+          ? new Date(baseNewArrivals[0].created_at)
+          : null;
+
+      // ⭐ สินค้าที่ใหม่กว่า base
+      const additional =
+        lastBaseCreatedAt
+          ? sorted.filter((p) => new Date(p.created_at) > lastBaseCreatedAt)
+          : [];
+
+      // ⭐ New Arrivals Final
+      const finalNewArrivals = [...additional, ...baseNewArrivals];
+
+      // ⭐ ใส่ badge new
+      const enhanced = sorted.map((p) => ({
+        ...p,
+        badge: finalNewArrivals.find((x) => x.id === p.id) ? "new" : null,
+      }));
+
+      setProducts(enhanced);
+
+      /* ⭐ GROUP BY BREED */
+      const breedsMap = {};
+      enhanced.forEach((p) => {
+        (p.breed_type || []).forEach((breed) => {
+          if (breed === "all") return;
+          if (!breedsMap[breed]) breedsMap[breed] = [];
+          breedsMap[breed].push(p);
         });
+      });
 
-        setBreedGroups(breedsMap);
-      } catch (e) {
-        console.error("โหลดสินค้าไม่สำเร็จ:", e);
-      }
-    };
+      setBreedGroups(breedsMap);
 
-    fetchProducts();
-  }, []);
+    } catch (e) {
+      console.error("โหลดสินค้าไม่สำเร็จ:", e);
+    }
+  };
+
+  fetchProducts();
+}, []);
+
+
 
   /* 🛒 เพิ่มลงตะกร้า */
   const addToCart = (product) => {
@@ -201,18 +227,37 @@ function HorizontalScroll({ products, addToCart }) {
   return (
     <div className="relative group">
 
+      {/* ⭐ Minimal Arrow Left */}
       <button
         onClick={() => scroll("left")}
         className="
-          absolute left-2 top-1/2 -translate-y-1/2 
-          bg-white shadow-lg 
-          p-3 rounded-full z-10 hover:bg-red-100 transition
+          absolute left-3 top-1/2 -translate-y-1/2
+          bg-white/90 backdrop-blur-sm text-gray-700
+          p-2 rounded-full shadow
           opacity-0 group-hover:opacity-100
+          hover:bg-red-50 transition
+          z-20
         "
       >
-        ◀
+        ←
       </button>
 
+      {/* ⭐ Minimal Arrow Right */}
+      <button
+        onClick={() => scroll("right")}
+        className="
+          absolute right-3 top-1/2 -translate-y-1/2
+          bg-white/90 backdrop-blur-sm text-gray-700
+          p-2 rounded-full shadow
+          opacity-0 group-hover:opacity-100
+          hover:bg-red-50 transition
+          z-20
+        "
+      >
+        →
+      </button>
+
+      {/* ⭐ Scrollable product list */}
       <div
         ref={scrollRef}
         className="flex gap-6 overflow-x-auto pb-3 scroll-smooth no-scrollbar"
@@ -223,21 +268,10 @@ function HorizontalScroll({ products, addToCart }) {
           </div>
         ))}
       </div>
-
-      <button
-        onClick={() => scroll("right")}
-        className="
-          absolute right-2 top-1/2 -translate-y-1/2 
-          bg-white shadow-lg 
-          p-3 rounded-full z-10 hover:bg-red-100 transition
-          opacity-0 group-hover:opacity-100
-        "
-      >
-        ▶
-      </button>
     </div>
   );
 }
+
 
 /* ----------------------------------------
    PRODUCT CARD
@@ -262,17 +296,28 @@ function PremiumProductCard({ product, addToCart }) {
       </Link>
 
       <div className="p-4 flex flex-col flex-1">
-        {/* ชื่อสินค้า สูงเท่ากันทุกใบ */}
-        <h3 className="font-semibold text-lg leading-snug min-h-[60px]">
-          {product.name}
+
+        {/* ⭐ ชื่อ + น้ำหนัก ระยะห่างกำลังดี อ่านง่าย */}
+        <h3 className="font-semibold text-lg text-gray-900 leading-relaxed mt-3 mb-3">
+          {product.name}{" "}
+          <span className="font-semibold text-gray-900">
+            {product.weight}
+          </span>
         </h3>
 
-        <p className="text-red-600 font-bold mb-3">{product.price} ฿</p>
+        {/* ราคา */}
+        <p className="text-red-600 font-bold text-xl mb-5">
+          {product.price} ฿
+        </p>
 
-        {/* ดันปุ่มลงล่าง */}
+        {/* ปุ่ม */}
         <button
           onClick={() => addToCart(product)}
-          className="mt-auto w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+          className="
+            mt-auto w-full py-2 bg-red-600 text-white 
+            rounded-lg font-semibold shadow 
+            hover:bg-red-700 hover:shadow-lg transition
+          "
         >
           🛒 เพิ่มลงตะกร้า
         </button>
@@ -280,4 +325,3 @@ function PremiumProductCard({ product, addToCart }) {
     </div>
   );
 }
-

@@ -87,14 +87,27 @@ export default function ProductDetailPage() {
 
         {/* INFO */}
         {/* INFO */}
+
+{/* INFO */}
 <div className="flex flex-col gap-4">
-  <h1 className="text-3xl font-bold">{product.name}</h1>
+
+  {/* ⭐ ชื่อ + น้ำหนัก */}
+  {/* ⭐ ชื่อ + น้ำหนัก */}
+    <h1 className="text-3xl font-bold text-gray-900 leading-snug">
+      {product.name}{" "}
+      <span className="font-bold">{product.weight}</span>
+    </h1>
+
+
+  {/* ราคา */}
   <p className="text-red-600 font-bold text-2xl">{product.price} ฿</p>
 
+  {/* รายละเอียด */}
   <p className="text-gray-700 leading-relaxed">
     {product.description || "ไม่มีรายละเอียดสินค้า"}
   </p>
 
+  {/* รายละเอียดอื่น ๆ */}
   <div className="mt-4 space-y-2 text-sm">
     <p><strong>ปริมาณ:</strong> {product.weight}</p>
     <p><strong>ช่วงวัย:</strong> {product.age_group}</p>
@@ -105,6 +118,7 @@ export default function ProductDetailPage() {
     )}
   </div>
 
+  {/* ปุ่ม */}
   <button
     onClick={addToCart}
     className="bg-red-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-red-700 transition"
@@ -112,6 +126,7 @@ export default function ProductDetailPage() {
     🛒 เพิ่มลงตะกร้า
   </button>
 </div>
+
 
       </div>
     </div>

@@ -333,6 +333,8 @@ function FilterGroup({ items, selected, toggle }) {
 function ProductCard({ product, addToCart }) {
   return (
     <div className="bg-white border rounded-2xl shadow hover:shadow-lg transition p-4 flex flex-col">
+
+      {/* รูปสินค้า */}
       <Link to={`/products/${product.id}`}>
         <img
           src={product.image_url}
@@ -341,16 +343,18 @@ function ProductCard({ product, addToCart }) {
         />
       </Link>
 
-      <h3 className="font-semibold text-lg mt-3 min-h-[50px]">
-        {product.name}
+      {/* ชื่อ + น้ำหนัก — ทั้งคู่ตัวหนา */}
+      <h3 className="font-semibold text-lg text-gray-900 leading-snug mt-4 mb-3">
+        {product.name}{" "}
+        <span className="font-semibold text-gray-900">{product.weight}</span>
       </h3>
 
-      {/* ⭐ น้ำหนัก */}
-      <p className="text-gray-600 text-sm mb-1">{product.weight}</p>
-
       {/* ราคา */}
-      <p className="text-red-600 font-bold mb-4">{product.price} ฿</p>
+      <p className="text-red-600 font-bold text-xl mb-5">
+        {product.price} ฿
+      </p>
 
+      {/* ปุ่มตะกร้า */}
       <button
         onClick={() => addToCart(product)}
         className="mt-auto w-full py-2.5 bg-red-600 text-white rounded-xl font-semibold shadow hover:shadow-lg active:scale-[0.97]"
@@ -360,4 +364,3 @@ function ProductCard({ product, addToCart }) {
     </div>
   );
 }
-
